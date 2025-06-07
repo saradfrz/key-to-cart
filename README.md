@@ -26,4 +26,4 @@ Abrir o link https://nfg.sefaz.rs.gov.br/Login/LoginNfg.aspx?urlRedir=%2fcadastr
 
 #### Using `ìnstallpkg.sh`
  - Make the script executable: `chmod +x installpkg.sh`
- - Run it like this: `./installpkg.sh pandas` 
+ - Run it like this: `./installpkg.sh undetected-chromedriver==3.5.5` 
