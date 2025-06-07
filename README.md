@@ -16,3 +16,14 @@ Abrir o link https://nfg.sefaz.rs.gov.br/Login/LoginNfg.aspx?urlRedir=%2fcadastr
 
 - Unificar os arquivos num csv mestre
 - A partir do csv mestre, baixar as NFs usando selenium, usando a url "https://www.sefaz.rs.gov.br/NFE/NFE-NFC.aspx?chaveNFe=43250589897201000309650080003178181661097065"
+
+
+### Track package instalation
+ - pip install <package>
+ - pip freeze > requirements.txt
+ - git add requirements.txt
+ - git commit -m "add: <package>"
+
+#### Using `ìnstallpkg.sh`
+ - Make the script executable: `chmod +x installpkg.sh`
+ - Run it like this: `./installpkg.sh pandas` 
