@@ -2,6 +2,7 @@ import os
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
+import json
 
 class NFEScraper:
     def __init__(self, csv_folder, download_folder, login_url, nfe_url_template, wait_timeout=60):
@@ -11,43 +12,48 @@ class NFEScraper:
         self.nfe_url_template = nfe_url_template
         self.wait_timeout = wait_timeout
         self.driver = None
+        self.cookies_file = os.path.join(self.download_folder, 'cookies.json')
 
-    def setup_browser(self, headless=False, user_data_dir=None):
-        options = Options()
+    def setup_browser(self, headless: bool = False, user_data_dir: str = None):
+        options = uc.ChromeOptions()
 
-        # Download folder preferences
-        prefs = {
-            "download.default_directory": self.download_folder,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True,
-        }
-        options.add_experimental_option("prefs", prefs)
-
+        # 1. Headless mode
         if headless:
-            options.add_argument("--headless")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--headless=new")  # safer headless option for newer Chrome
 
+        # 2. User data dir
         if user_data_dir:
-            options.add_argument(f'--user-data-dir={user_data_dir}')
-            options.add_argument("--profile-directory=Default")
+            options.add_argument(f"--user-data-dir={str(user_data_dir)}")
 
-        options.add_argument("--disable-blink-features=AutomationControlled")
 
-        # IMPORTANT: With Selenium 3.x, you **must** pass the executable path manually
-        # undetected-chromedriver will provide this path via uc.install()
-
-        driver_path = uc.install()  # downloads driver if needed, returns path
-
-        self.driver = uc.Chrome(executable_path=driver_path, options=options)
-        self.driver.set_page_load_timeout(60)
+        # 5. Start Chrome
+        self.driver = uc.Chrome()
+        self.driver.set_page_load_timeout(180)
 
         print(f"[INFO] Undetected Chrome started with download folder: {self.download_folder}")
 
-    def manual_login(self):
-        if not self.driver:
-            raise RuntimeError("Browser not initialized. Call setup_browser() first.")
-        self.driver.get(self.login_url)
-        print(f"[INFO] Please log in manually within {self.wait_timeout} seconds...")
-        time.sleep(self.wait_timeout)
+
+    def save_cookies_after_manual_login(self, cookies_file):
+        driver = self.driver
+        driver.get(self.login_url)
+
+        print("Login manually, then press Enter here.")
+        input()
+
+        cookies = driver.get_cookies()
+        with open(cookies_file, 'w') as f:
+            json.dump(cookies, f, indent=4)
+
+        print(f"Cookies saved to {cookies_file}")
+        driver.quit()
+
+    def load_cookies_to_driver(self, domain):
+        driver = self.driver
+        with open(self.cookies_file, 'r') as f:
+            cookies = json.load(f)
+
+        driver.get(domain)  # Must load the domain first
+        for cookie in cookies:
+            if 'sameSite' in cookie:
+                del cookie['sameSite']  
+            driver.add_cookie(cookie)
