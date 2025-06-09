@@ -1,17 +1,20 @@
-# Custom
+# === Custom Project Files ===
 chromedriver
-session
+session/
 all_data.json
+*.log
 
+# === Log Files ===
+logs/
+logs/**/
+*.log
 
-
-
-# Byte-compiled / optimized / DLL files
+# === Python Bytecode ===
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
+# === Virtual Environments ===
 .venv/
 env/
 venv/
@@ -19,18 +22,18 @@ ENV/
 env.bak/
 venv.bak/
 
-# Distribution / packaging
+# === Distribution / Packaging ===
 build/
 dist/
 *.egg-info/
 .eggs/
 *.egg
 
-# Installer logs
+# === Installer Logs ===
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# === Unit Test / Coverage Reports ===
 htmlcov/
 .tox/
 .nox/
@@ -43,21 +46,21 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Jupyter Notebook
+# === Jupyter Notebooks ===
 .ipynb_checkpoints
 
-# VS Code settings
+# === IDE/Editor Settings ===
+# VS Code
 .vscode/
-
-# PyCharm settings
+# PyCharm
 .idea/
 
+# === OS Generated Files ===
 # macOS
 .DS_Store
-
 # Linux
 *.swp
 
-# dotenv
+# === Environment Variables ===
 .env
 .env.*

@@ -1,4 +1,4 @@
-from config import CSV_FOLDER, DOWNLOAD_FOLDER, LOGIN_URL, NFE_URL_TEMPLATE, USER_DATA_DIR, COOKIES_PATH
+from config import CSV_FOLDER, DOWNLOAD_FOLDER, LOGIN_URL, NFE_URL_TEMPLATE, USER_DATA_DIR, COOKIES_FILE, NFE_DATA_DIR
 from nfe_scraper import NFEScraper
 from data_prep_for_scrapper import DataPrepForScraper
 import json
@@ -10,6 +10,8 @@ def main():
         download_folder=DOWNLOAD_FOLDER,
         login_url=LOGIN_URL,
         nfe_url_template=NFE_URL_TEMPLATE,
+        nfe_data_dir=NFE_DATA_DIR,
+        cookies_file=COOKIES_FILE,
         wait_timeout=180  
     )
 
@@ -19,19 +21,13 @@ def main():
     )
 
     try:
-        #scraper.save_cookies_after_manual_login(COOKIES_PATH)
+        #scraper.save_cookies_after_manual_login(COOKIES_FILE)
         data_prep = DataPrepForScraper(scraper.csv_folder)
         csv_list = data_prep.get_all_data_files()
         data = data_prep.get_all_files_content(csv_list)
-        # Save data to JSON file
-        with open('all_data.json', 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    
 
-        scraper.extract_nfe_data(
-            data=data,
-            cookies_file=COOKIES_PATH,
-            user_data_dir=USER_DATA_DIR
+        scraper.download_nfe_data(
+            data=data
         )
 
 
