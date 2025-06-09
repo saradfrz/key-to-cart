@@ -51,7 +51,6 @@ coverage.xml
 
 # === IDE/Editor Settings ===
 # VS Code
-.vscode/
 # PyCharm
 .idea/
 
