@@ -3,6 +3,7 @@ chromedriver
 session/
 all_data.json
 *.log
+nfe_data/*
 
 # === Log Files ===
 logs/

@@ -1,6 +1,6 @@
-from config import CSV_FOLDER, DOWNLOAD_FOLDER, LOGIN_URL, NFE_URL_TEMPLATE, USER_DATA_DIR, COOKIES_FILE, NFE_DATA_DIR
-from nfe_scraper import NFEScraper
-from data_prep_for_scrapper import DataPrepForScraper
+from sefaz_scrapper.config import CSV_FOLDER, DOWNLOAD_FOLDER, LOGIN_URL, NFE_URL_TEMPLATE, USER_DATA_DIR, COOKIES_FILE, NFE_DATA_DIR
+from sefaz_scrapper.nfe_scraper import NFEScraper
+from sefaz_scrapper.data_prep_for_scrapper import DataPrepForScraper
 import json
 
 
