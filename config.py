@@ -15,4 +15,6 @@ NFCE_DATA_DIR = os.path.join(BASE_DIR, "nfce_data")
 
 
 # Parser Variables
+STORE_NAME__CLASS = "NFCCabecalho_SubTitulo"
+CNPJ_STORE_STATE_CODE__CLASS = "NFCCabecalho_SubTitulo1"
 

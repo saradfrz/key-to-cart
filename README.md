@@ -27,3 +27,6 @@ Abrir o link https://nfg.sefaz.rs.gov.br/Login/LoginNfg.aspx?urlRedir=%2fcadastr
 #### Using `ìnstallpkg.sh`
  - Make the script executable: `chmod +x installpkg.sh`
  - Run it like this: `./installpkg.sh selenium==3.14.0` 
+
+
+ Save soup using debug cosole: `open("output.html", "w", encoding="utf-8").write(soup.prettify())` 

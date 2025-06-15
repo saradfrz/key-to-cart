@@ -39,6 +39,6 @@ Write-Host "Adding requirements.txt to Git staging..."
 git add requirements.txt
 
 # Step 4: Git commit
-$commitMessage = "add: $PackageName"
+$commitMessage = "install(package): Install $PackageName"
 Write-Host "Committing with message: $commitMessage"
 git commit -m $commitMessage
