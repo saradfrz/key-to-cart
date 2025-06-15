@@ -5,16 +5,16 @@ from selenium.webdriver.chrome.options import Options
 import json
 from logs.log_handler import setup_logger
 
-class NFEScraper:
-    def __init__(self, csv_folder, download_folder, login_url, nfe_url_template, nfe_data_dir, cookies_file, wait_timeout=60):
+class nfceScraper:
+    def __init__(self, csv_folder, download_folder, login_url, nfce_url_template, nfce_data_dir, cookies_file, wait_timeout=60):
         self.csv_folder = csv_folder
         self.download_folder = os.path.abspath(download_folder)
         self.login_url = login_url
-        self.nfe_url_template = nfe_url_template
+        self.nfce_url_template = nfce_url_template
         self.wait_timeout = wait_timeout
         self.driver = None
         self.cookies_file = cookies_file
-        self.nfe_data_dir = nfe_data_dir
+        self.nfce_data_dir = nfce_data_dir
         self.logger = setup_logger(self.__class__.__name__)
 
     def setup_browser(self, headless: bool = False, user_data_dir: str = None):
@@ -52,27 +52,27 @@ class NFEScraper:
         print(f"Cookies saved to {cookies_file}")
         driver.quit()
 
-    def download_nfe_data(self, data):
+    def download_nfce_data(self, data):
 
-        for nfe in data:
-            key = nfe['Chave de Acesso']
-            print(f"Processing NFE with key: {key}")
+        for nfce in data:
+            key = nfce['Chave de Acesso']
+            print(f"Processing nfce with key: {key}")
             try:
-                self._access_nfe_html(key)
+                self._access_nfce_html(key)
                 self._find_next_button()
-                self._download_html(self._create_unique_key(nfe))
+                self._download_html(self._create_unique_key(nfce))
             except Exception as e:
-                self.logger.error(f"Access denied for NFE with key {key}. Razão Social: {nfe['Razão Social']}. Data de Emissão: {nfe['Data Emissão']}. Error: {e}")
+                self.logger.error(f"Access denied for nfce with key {key}. Razão Social: {nfce['Razão Social']}. Data de Emissão: {nfce['Data Emissão']}. Error: {e}")
                 continue
             time.sleep(2)       
 
-    def _access_nfe_html(self, key):
+    def _access_nfce_html(self, key):
         
         driver = self.driver
         with open(self.cookies_file, 'r') as f:
             cookies = json.load(f)
         key = key.replace(" ", "")  # URL encode spaces
-        driver.get(f"{self.nfe_url_template}{key}")  # Must load the domain first
+        driver.get(f"{self.nfce_url_template}{key}")  # Must load the domain first
         # for cookie in cookies:
         #     if 'sameSite' in cookie:
         #         del cookie['sameSite']  
@@ -101,20 +101,20 @@ class NFEScraper:
             self.logger.error(f"Failed to find or click 'Avançar' button: {e}")
             raise Exception(f"Failed to find or click 'Avançar' button: {e}")
 
-    def _create_unique_key(self, nfe):
+    def _create_unique_key(self, nfce):
         """
-        Builds a normalized NFE filename in the format: YYYYMMDD__AccessKey__StoreName
+        Builds a normalized nfce filename in the format: YYYYMMDD__AccessKey__StoreName
         """
-        access_key = nfe['Chave de Acesso'].replace(" ", "")
+        access_key = nfce['Chave de Acesso'].replace(" ", "")
 
         # Format date as YYYYMMDD
-        raw_date = nfe['Data Emissão'].strip()
+        raw_date = nfce['Data Emissão'].strip()
         date_parts = raw_date.split("/")
         formatted_date = "".join(date_parts[::-1])  # DD/MM/YYYY → YYYYMMDD
 
         # Normalize store name for filesystem safety
         store_name = (
-            nfe['Razão Social']
+            nfce['Razão Social']
             .strip()
             .replace(" ", "_")
             .replace("/", "")
@@ -126,11 +126,11 @@ class NFEScraper:
 
     def _download_html(self, unique_key):
         driver = self.driver
-        nfe_html = driver.page_source
-        file_path = os.path.join(self.nfe_data_dir, f"{unique_key}.html")
+        nfce_html = driver.page_source
+        file_path = os.path.join(self.nfce_data_dir, f"{unique_key}.html")
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(nfe_html)
+            f.write(nfce_html)
 
-        self.logger.scraping_info(f"Downloaded NFE HTML for key {unique_key} to {file_path}")
+        self.logger.scraping_info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
 
 
