@@ -138,4 +138,14 @@ class NFCeParser:
         return re.sub(r'\s+', ' ', text).strip()
 
     def _parse_purchase(self):
-        pass
+        table = self.soup.find_all('table')[1]
+        items_raw = table.find_all('tr', id=re.compile(r'^Item \+ \d+$'))
+        items = []
+        for item_raw in items_raw:
+            keys = ["Código", "Descrição", "Qtde", "Un", "Vl Unit", "Vl Total"]
+            values = [s.contents[0] for s in item_raw.find_all('td')]
+            item = zip(keys, values)
+            items.append(dict(item))
+        return items
+ 
+        

@@ -38,6 +38,28 @@ class DataTools():
                     file_data = self._get_html_content(file)
                     data.extend(file_data)
         return data
+    
+    def create_unique_key(self, access_key,  purchase_date, store_name) -> str:
+        """
+        Builds a normalized nfce filename in the format: YYYYMMDD__AccessKey__StoreName
+        """
+        access_key = access_key.replace(" ", "")
+
+        # Format date as YYYYMMDD
+        raw_date = purchase_date.strip()
+        date_parts = raw_date.split("/")
+        formatted_date = "".join(date_parts[::-1])  # DD/MM/YYYY → YYYYMMDD
+
+        # Normalize store name for filesystem safety
+        store_name = (
+            store_name
+            .strip()
+            .replace(" ", "_")
+            .replace("/", "")
+            .replace("\\", "")
+            .lower()
+        )
+        return f"{formatted_date}__{access_key}__{store_name}"
 
     def _get_csv_content(self, csv_file: str) -> list:
         """
