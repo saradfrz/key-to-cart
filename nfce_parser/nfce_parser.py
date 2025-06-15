@@ -86,13 +86,56 @@ class NFCeParser:
         return [cnpj, store_state_code]
 
     def _parse_store_address(self):
-        pass
+        address = self.soup.find_all('td', {'class': CNPJ_STORE_STATE_CODE__CLASS})[1].contents[0].strip()
+        return self._replace_multiple_spaces(address)
+    
 
     def _parse_purchase_date(self):
-        pass
+        soup_list = self.soup.find_all('td', {'class': STORE_NAME__CLASS})
+        date_raw = [s for s in soup_list if "Data de Emissão" in s.contents[0].strip()][0]
+        date_raw = date_raw.contents[0].strip()
+        return self._extract_datetime(date_raw)
+
+    def _extract_datetime(self, date_raw):
+        """
+        Extracts and returns a datetime string in the pattern dd/dd/dddd dd:dd:dd from the input string.
+        Args:
+            date_raw (str): The raw string containing the date and time.
+        Returns:
+            str or None: The matched datetime string, or None if not found.
+        """
+        pattern = r"\b\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}\b"
+        match = re.search(pattern, date_raw)
+        return match.group(0) if match else None
 
     def _parse_access_key(self):
-        pass
+        soup_list = self.soup.find_all('td', {'class': STORE_NAME__CLASS})
+        raw_access_key = [s for s in soup_list if self._extract_access_key(s.contents[0].strip())]
+        return raw_access_key[0].contents[0] if raw_access_key else None
+
+
+    def _extract_access_key(self, text):
+        """
+        Extracts and returns a string matching the NFE access key pattern:
+        11 groups of 4 digits separated by spaces (e.g., 4321 0189 8972 ...).
+        Args:
+            text (str): The input string to search.
+        Returns:
+            str or None: The matched access key string, or None if not found.
+        """
+        pattern = r"(\d{4} ){10}\d{4}"
+        match = re.search(pattern, text)
+        return match.group(0) if match else None
+    
+    def _replace_multiple_spaces(self, text):
+        """
+        Replaces multiple spaces in a string with a single space.
+        Args:
+            text (str): The input string.
+        Returns:
+            str: The modified string with multiple spaces replaced by a single space.
+        """
+        return re.sub(r'\s+', ' ', text).strip()
 
     def _parse_purchase(self):
         pass
