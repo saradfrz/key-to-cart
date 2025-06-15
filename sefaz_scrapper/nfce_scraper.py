@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import json
 from logs.log_handler import setup_logger
 
-class nfceScraper:
+class NFCeScraper:
     def __init__(self, csv_folder, download_folder, login_url, nfce_url_template, nfce_data_dir, cookies_file, wait_timeout=60):
         self.csv_folder = csv_folder
         self.download_folder = os.path.abspath(download_folder)
@@ -19,22 +19,13 @@ class nfceScraper:
 
     def setup_browser(self, headless: bool = False, user_data_dir: str = None):
         options = uc.ChromeOptions()
-
         options.add_argument('--disable-blink-features=AutomationControlled')
-
-        # 1. Headless mode
         if headless:
             options.add_argument("--headless=new")  # safer headless option for newer Chrome
-
-        # 2. User data dir
         if user_data_dir:
             options.add_argument(f"--user-data-dir={str(user_data_dir)}")
-
-
-        # 5. Start Chrome
         self.driver = uc.Chrome()
         self.driver.set_page_load_timeout(180)
-
         print(f"[INFO] Undetected Chrome started with download folder: {self.download_folder}")
 
 
@@ -53,7 +44,6 @@ class nfceScraper:
         driver.quit()
 
     def download_nfce_data(self, data):
-
         for nfce in data:
             key = nfce['Chave de Acesso']
             print(f"Processing nfce with key: {key}")
