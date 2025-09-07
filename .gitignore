@@ -7,6 +7,9 @@ nfce_data/*
 nfce_data_legacy/*
 nfce_parser/data/*
 
+output/*
+input/*
+
 # === Log Files ===
 logs/
 logs/**/

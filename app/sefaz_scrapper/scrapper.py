@@ -4,10 +4,12 @@ import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
 import json
 from logs.log_handler import setup_logger
+from app.data_tools import DataTools
+
+from config import MASTER_DATA
 
 class NFCeScraper:
-    def __init__(self, csv_folder, download_folder, login_url, nfce_url_template, nfce_data_dir, cookies_file, wait_timeout=60):
-        self.csv_folder = csv_folder
+    def __init__(self, download_folder, login_url, nfce_url_template, nfce_data_dir, cookies_file, user_data_dir, wait_timeout=60):
         self.download_folder = os.path.abspath(download_folder)
         self.login_url = login_url
         self.nfce_url_template = nfce_url_template
@@ -16,6 +18,9 @@ class NFCeScraper:
         self.cookies_file = cookies_file
         self.nfce_data_dir = nfce_data_dir
         self.logger = setup_logger(self.__class__.__name__)
+        self.user_data_dir = user_data_dir
+        self.MASTER_DATA = MASTER_DATA
+
 
     def setup_browser(self, headless: bool = False, user_data_dir: str = None):
         options = uc.ChromeOptions()
@@ -122,5 +127,19 @@ class NFCeScraper:
             f.write(nfce_html)
 
         self.logger.scraping_info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
+
+    def run(self):
+        try:
+            self.setup_browser(headless=False, user_data_dir=self.user_data_dir) 
+            #scraper.save_cookies_after_manual_login(COOKIES_FILE)
+            data_prep = DataTools()
+            csv_list = data_prep.get_all_data_files(self.MASTER_DATA, ".csv")
+            data = data_prep.get_all_files_content(csv_list, ".csv")
+            self.download_nfce_data(data=data)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print("Please check your setup and try again.")
+        finally:
+            self.driver.quit()
 
 

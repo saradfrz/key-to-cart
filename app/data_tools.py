@@ -2,11 +2,10 @@ import os
 import csv
 
 class DataTools():
-    def __init__(self, folder, extension):
-        self.folder = folder
-        self.extension = extension
+    def __init__(self):
+        pass
 
-    def get_all_data_files(self) -> list:
+    def get_all_data_files(self, folder, extension) -> list:
         """
         Get all files with the specified extension from the folder.
         Returns:
@@ -14,13 +13,13 @@ class DataTools():
         """
 
         files_with_extension = []
-        for root, dirs, files in os.walk(self.folder):
+        for root, dirs, files in os.walk(folder):
             for filename in files:
-                if filename.endswith(self.extension):
+                if filename.endswith(extension):
                     files_with_extension.append(os.path.join(root, filename))
         return files_with_extension
 
-    def get_all_files_content(self, file_list) -> list:
+    def get_all_files_content(self, file_list, extension) -> list:
         """
         Read the content of all files with the specified extension and return a list of their contents.
         Args:
@@ -30,11 +29,11 @@ class DataTools():
         """
         data = []
         for file in file_list:
-            if file.endswith(self.extension):
-                if self.extension == '.csv':
+            if file.endswith(extension):
+                if extension == '.csv':
                     file_data = self._get_csv_content(file)
                     data.extend(file_data)
-                elif self.extension == '.html':
+                elif extension == '.html':
                     file_data = self._get_html_content(file)
                     data.extend(file_data)
         return data
