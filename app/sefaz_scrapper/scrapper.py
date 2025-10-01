@@ -55,6 +55,7 @@ class NFCeScraper:
             try:
                 self._access_nfce_html(key)
                 self._find_next_button()
+                time.sleep(2)
                 self._download_html(self._create_unique_key(nfce))
             except Exception as e:
                 self.logger.error(f"Access denied for nfce with key {key}. Razão Social: {nfce['Razão Social']}. Data de Emissão: {nfce['Data Emissão']}. Error: {e}")
@@ -73,7 +74,7 @@ class NFCeScraper:
         #         del cookie['sameSite']  
         #     driver.add_cookie(cookie)
         # # Wait for the page to load
-        time.sleep(10)
+        time.sleep(5)
 
         if "Acesso Negado" in driver.page_source:
             self.logger.error(f"Acesso Negado")
@@ -88,9 +89,8 @@ class NFCeScraper:
             next_button = driver.find_element('xpath', "//input[@type='submit' and @value='Avançar']")
             next_button.click()
 
-
             # here i see the data, i can inspect the data in the driver html but i cant extract it
-            time.sleep(5)  # Wait for the page to load after clicking
+            time.sleep(10)  # Wait for the page to load after clicking
             self.driver = driver
         except Exception as e:
             self.logger.error(f"Failed to find or click 'Avançar' button: {e}")

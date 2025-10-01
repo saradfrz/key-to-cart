@@ -29,7 +29,7 @@ class NFCeParser:
             content = None
 
         soup = BeautifulSoup(content, 'html.parser') if content else None
-        self.soup = soup.find('table') if soup else None
+        self.soup_list = soup.find_all('table') if soup else None
         self.purchase_data = []
         self.purchase_items_data = []
         self.logger = setup_logger(self.__class__.__name__)
@@ -57,37 +57,39 @@ class NFCeParser:
         Parse the file content and extract relevant data.
         This method should be implemented in subclasses.
         """
-        try:
-            store = self._parse_store()
-        except Exception as e:
-            self.logger.error(f"Error parsing store: {e}")
-            store = None
-            pass
-        try:
-            [cnpj, store_state_code] = self._parse_store_codes()
-        except Exception as e:
-            self.logger.error(f"Error parsing cnpj/store_state_code: {e}")
-            cnpj = None
-            store_state_code = None
-            pass
-        try:
-            address = self._parse_store_address()
-        except Exception as e:
-            self.logger.error(f"Error parsing store_address: {e}")
-            address = None
-            pass
-        try:
-            purchase_date = self._parse_purchase_date()
-        except Exception as e:
-            self.logger.error(f"Error parsing purchase_date: {e}")
-            purchase_date = None
-            pass
-        try:
-            access_key = self._parse_access_key()
-        except Exception as e:
-            self.logger.error(f"Error parsing access_key: {e}")
-            access_key = None
-            pass
+        for soup in self.soup_list:
+            try:
+                store = self._parse_store(soup)
+                breakpoint()
+            except Exception as e:
+                self.logger.error(f"Error parsing store: {e}")
+                store = None
+                continue
+            try:
+                [cnpj, store_state_code] = self._parse_store_codes(soup)
+            except Exception as e:
+                self.logger.error(f"Error parsing cnpj/store_state_code: {e}")
+                cnpj = None
+                store_state_code = None
+                pass
+            try:
+                address = self._parse_store_address(soup)
+            except Exception as e:
+                self.logger.error(f"Error parsing store_address: {e}")
+                address = None
+                pass
+            try:
+                purchase_date = self._parse_purchase_date(soup)
+            except Exception as e:
+                self.logger.error(f"Error parsing purchase_date: {e}")
+                purchase_date = None
+                pass
+            try:
+                access_key = self._parse_access_key(soup)
+            except Exception as e:
+                self.logger.error(f"Error parsing access_key: {e}")
+                access_key = None
+                pass
 
         self.purchase_data = [store, cnpj, store_state_code, address, purchase_date, access_key]
 
@@ -102,35 +104,35 @@ class NFCeParser:
             self.purchase_items_data.append(item)
 
 
-    def _parse_store(self):
+    def _parse_store(self, soup: BeautifulSoup):
         """
         Parses the store name from the HTML and returns it.
         """
-        return self.soup.find('td', {'class': STORE_NAME__CLASS}).contents[0].strip()
+        return soup.find('td', {'class': STORE_NAME__CLASS}).contents[0].strip()
 
-    def _parse_store_codes(self):
+    def _parse_store_codes(self, soup):
         """
         Parses the CNPJ and store state code from the HTML and returns them as a list [CNPJ, store_state_code].
         """
-        raw_codes = self.soup.find('td', {'class': CNPJ_STORE_STATE_CODE__CLASS}).contents[0].strip()
+        raw_codes = soup.find('td', {'class': CNPJ_STORE_STATE_CODE__CLASS}).contents[0].strip()
         codes = [s.strip() for s in raw_codes.split('\n')]
         cnpj = codes[1]
         store_state_code = codes[2].replace("Inscrição Estadual: ", "").strip()
         return [cnpj, store_state_code]
 
-    def _parse_store_address(self):
+    def _parse_store_address(self, soup: BeautifulSoup):
         """
         Parses the store address from the HTML and returns it.
         """
-        address = self.soup.find_all('td', {'class': CNPJ_STORE_STATE_CODE__CLASS})[1].contents[0].strip()
+        address = soup.find_all('td', {'class': CNPJ_STORE_STATE_CODE__CLASS})[1].contents[0].strip()
         return self._replace_multiple_spaces(address)
     
 
-    def _parse_purchase_date(self):
+    def _parse_purchase_date(self, soup: BeautifulSoup):
         """
         Parses the purchase date from the HTML and returns it.
         """
-        soup_list = self.soup.find_all('td', {'class': STORE_NAME__CLASS})
+        soup_list = soup.find_all('td', {'class': STORE_NAME__CLASS})
         date_raw = [s for s in soup_list if "Data de Emissão" in s.contents[0].strip()][0]
         date_raw = date_raw.contents[0].strip()
         return self._extract_datetime(date_raw)
@@ -147,11 +149,11 @@ class NFCeParser:
         match = re.search(pattern, date_raw)
         return match.group(0) if match else None
 
-    def _parse_access_key(self):
+    def _parse_access_key(self, soup):
         """
         Parses the access key from the HTML and returns it.
         """
-        soup_list = self.soup.find_all('td', {'class': STORE_NAME__CLASS})
+        soup_list = soup.find_all('td', {'class': STORE_NAME__CLASS})
         raw_access_key = [s for s in soup_list if self._extract_access_key(s.contents[0].strip())]
         return raw_access_key[0].contents[0].replace(" ","") if raw_access_key else None
 
@@ -179,11 +181,11 @@ class NFCeParser:
         """
         return re.sub(r'\s+', ' ', text).strip()
 
-    def _parse_purchase(self) -> list[list[str]]:
+    def _parse_purchase(self, soup: BeautifulSoup) -> list[list[str]]:
         """
         Parses the purchase items from the HTML and returns them as a list of items bought in the purchase.
         """
-        table = self.soup.find_all('table')[1]
+        table = soup.find_all('table')[1]
         items_raw = table.find_all('tr', id=re.compile(r'^Item \+ \d+$'))
         items = []
         for item_raw in items_raw:
