@@ -19,8 +19,6 @@ if __name__ == "__main__":
 
     nfce_scrapper.run()
 
-    breakpoint()
-
     tools = DataTools()
     pages = tools.get_all_data_files(
         NFCE_DATA_DIR,

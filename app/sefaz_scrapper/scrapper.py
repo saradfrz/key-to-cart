@@ -65,8 +65,8 @@ class NFCeScraper:
     def _access_nfce_html(self, key):
         
         driver = self.driver
-        with open(self.cookies_file, 'r') as f:
-            cookies = json.load(f)
+        # with open(self.cookies_file, 'r') as f:
+        #     cookies = json.load(f)
         key = key.replace(" ", "")  # URL encode spaces
         driver.get(f"{self.nfce_url_template}{key}")  # Must load the domain first
         # for cookie in cookies:
@@ -103,7 +103,7 @@ class NFCeScraper:
         access_key = nfce['Chave de Acesso'].replace(" ", "")
 
         # Format date as YYYYMMDD
-        raw_date = nfce['Data Emissão'].strip()
+        raw_date = nfce['Emissão'].strip()
         date_parts = raw_date.split("/")
         formatted_date = "".join(date_parts[::-1])  # DD/MM/YYYY → YYYYMMDD
 
