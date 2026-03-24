@@ -60,7 +60,6 @@ class NFCeParser:
         for soup in self.soup_list:
             try:
                 store = self._parse_store(soup)
-                breakpoint()
             except Exception as e:
                 self.logger.error(f"Error parsing store: {e}")
                 store = None

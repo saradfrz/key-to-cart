@@ -122,6 +122,7 @@ class NFCeScraper:
 
     def _download_html(self, unique_key):
         driver = self.driver
+        time.sleep(5)  # Ensure the page is fully loaded
         nfce_html = driver.page_source
         file_path = os.path.join(self.nfce_data_dir, f"{unique_key}.html")
         with open(file_path, 'w', encoding='utf-8') as f:
