@@ -49,13 +49,14 @@ class NFCeScraper:
         driver.quit()
 
     def download_nfce_data(self, data):
-        for nfce in data:
+        n_notas = len(data)
+        for x, nfce in enumerate(data):
             key = nfce['Chave de Acesso']
-            print(f"Processing nfce with key: {key}")
+            print(f"Processing nfce {x + 1}/{n_notas} with key: {key}")
             try:
                 self._access_nfce_html(key)
                 self._find_next_button()
-                time.sleep(2)
+                time.sleep(5)
                 self._download_html(self._create_unique_key(nfce))
             except Exception as e:
                 self.logger.error(f"Access denied for nfce with key {key}. Razão Social: {nfce['Razão Social']}. Data de Emissão: {nfce['Data Emissão']}. Error: {e}")

@@ -65,6 +65,7 @@ class NFCeParser:
                 self.logger.error(f"Error parsing store: {e}")
                 store = None
                 continue
+
             try:
                 [cnpj, store_state_code] = self._parse_store_codes(soup)
             except Exception as e:
