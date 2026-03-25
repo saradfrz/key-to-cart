@@ -56,7 +56,7 @@ class NFCeScraper:
             try:
                 self._access_nfce_html(key)
                 self._find_next_button()
-                time.sleep(5)
+                time.sleep(3)
                 self._download_html(self._create_unique_key(nfce))
             except Exception as e:
                 self.logger.error(f"Access denied for nfce with key {key}. Razão Social: {nfce['Razão Social']}. Data de Emissão: {nfce['Data Emissão']}. Error: {e}")
@@ -91,7 +91,7 @@ class NFCeScraper:
             next_button.click()
 
             # here i see the data, i can inspect the data in the driver html but i cant extract it
-            time.sleep(10)  # Wait for the page to load after clicking
+            time.sleep(5)  # Wait for the page to load after clicking
             self.driver = driver
         except Exception as e:
             self.logger.error(f"Failed to find or click 'Avançar' button: {e}")
@@ -120,15 +120,33 @@ class NFCeScraper:
         return f"{formatted_date}__{access_key}__{store_name}"
 
 
+    def _dismiss_alert_if_present(self):
+        try:
+            alert = self.driver.switch_to.alert
+            alert_text = alert.text
+            self.logger.scraping_info(f"Dismissed alert: {alert_text}")
+            alert.accept()  # clicks OK
+            return alert_text
+        except Exception as e:
+            return None
+
     def _download_html(self, unique_key):
         driver = self.driver
         time.sleep(5)  # Ensure the page is fully loaded
+
+        # Dismiss any alert before interacting with the page
+        alert_text = self._dismiss_alert_if_present()
+        if alert_text:
+            self.logger.scraping_info(f"Skipping key {unique_key} due to alert: {alert_text}")
+            return False  # signal to caller that this key failed
+
         nfce_html = driver.page_source
         file_path = os.path.join(self.nfce_data_dir, f"{unique_key}.html")
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(nfce_html)
 
         self.logger.scraping_info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
+        return True
 
     def run(self):
         try:
