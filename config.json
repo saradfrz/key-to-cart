@@ -1,0 +1,17 @@
+{
+    "dir": {
+        "input": "input",
+        "output": "output"
+    },
+    "invoice_downloader": {
+        "download_folder": "downloads",
+        "sefaz_login_url": "https://nfg.sefaz.rs.gov.br/Login/LoginNfg.aspx?urlRedir=%2fcadastro%2fConsultaDocumentos.aspx",
+        "nfce_url_template": "https://www.sefaz.rs.gov.br/NFE/NFE-NFC.aspx?chaveNFe=",
+        "user_data_dir": "C:/Users/saraf/AppData/Local/Google/Chrome/User Data/Default",
+        "wait_timeout": 60
+    },
+    "invoice_parser":{
+        "store_name__class": "NFCCabecalho_SubTitulo",
+        "cnpj_store_state_code__class": "NFCCabecalho_SubTitulo1"
+    }
+}

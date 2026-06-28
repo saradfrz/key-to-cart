@@ -21,22 +21,6 @@ Este projeto automatiza o processo de:
 - `logs/`: Logs do processo
 - `requirements.txt`: Dependências Python
 
-## Setup do Ambiente (WSL)
-
-1. Instale Python no WSL:
-   ```sh
-   sudo apt update
-   sudo apt install python3 python3-pip python3.12-venv
-   ```
-2. Crie e ative o ambiente virtual:
-   ```sh
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-3. Instale as dependências:
-   ```sh
-   pip install -r requirements.txt
-   ```
 
 ## Como Usar
 
@@ -52,48 +36,35 @@ Este projeto automatiza o processo de:
 - O scraping utiliza Selenium com undetected-chromedriver para evitar bloqueios.
 - É necessário realizar login manual no primeiro uso para salvar os cookies.
 - O parser utiliza BeautifulSoup para extrair dados estruturados dos HTMLs.
-- O projeto pode ser executado tanto no WSL quanto no Windows, mas recomenda-se o uso do WSL para maior compatibilidade.
 
-## Instalação de Pacotes Python e Automação
+# Fluxo orientado a responsabilidades
 
-Para instalar novos pacotes e atualizar o requirements.txt automaticamente, use:
-
-```sh
-pip install <package>
-pip freeze > requirements.txt
-git add requirements.txt
-git commit -m "add: <package>"
-```
-
-Ou utilize o script PowerShell:
-
-```powershell
-./installpkg.ps1 -PackageName <package>
-```
-
-## Track package installation
-
-- pip install <package>
-- pip freeze > requirements.txt
-- git add requirements.txt
-- git commit -m "add: <package>"
-
-#### Usando `installpkg.ps1`
-- Execute no PowerShell:
-  ```powershell
-  ./installpkg.ps1 -PackageName <package>
-  ```
-
-#### Usando `installpkg.sh` (Linux)
-- Torne o script executável: `chmod +x installpkg.sh`
-- Execute: `./installpkg.sh selenium==3.14.0`
-
-## Dicas de Debug
-
-- Para salvar o HTML de uma página manualmente no console Python:
-  ```python
-  open("output.html", "w", encoding="utf-8").write(soup.prettify())
-  ```
-
+Config
+   │
+   ▼
+InvoicePipeline
+   │
+   ├──────────────► InvoiceSource
+   │                     │
+   │                     ▼
+   │              List[Invoice]
+   │
+   ├──────────────► ReceitaSession
+   │                     │
+   │                     ▼
+   ├──────────────► ReceitaDownloader
+   │                     │
+   │                     ▼
+   │                html/*.html
+   │
+   ├──────────────► ReceitaParser
+   │                     │
+   │                     ▼
+   │              List[InvoiceResult]
+   │
+   └──────────────► CSVExporter
+                         │
+                         ▼
+                    resultado.csv
 ---
 Atualizado em: 20/02/2026

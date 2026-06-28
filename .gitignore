@@ -6,6 +6,8 @@ all_data.json
 nfce_data/*
 nfce_data_legacy/*
 nfce_parser/data/*
+legacy
+
 
 output/*
 input/*

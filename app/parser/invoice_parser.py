@@ -1,11 +1,10 @@
 from bs4 import BeautifulSoup
-from logs.log_handler import setup_logger
+import logging
 import re
 from config import (
     STORE_NAME__CLASS, 
     CNPJ_STORE_STATE_CODE__CLASS
     )
-from app.data_tools import DataTools
 import os
 import csv
 
@@ -16,6 +15,7 @@ class NFCeParser:
         Args:
             file_path (str): Path to the HTML file to parse.
         """
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.NFCE_DATA_DIR = NFCE_DATA_DIR
         self.PARSER_OUTPUT_FOLDER = PARSER_OUTPUT_FOLDER
         self.file_path = file_path
@@ -32,7 +32,7 @@ class NFCeParser:
         self.soup_list = soup.find_all('table') if soup else None
         self.purchase_data = []
         self.purchase_items_data = []
-        self.logger = setup_logger(self.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         
     def store_data(self, key, value):
