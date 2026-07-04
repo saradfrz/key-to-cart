@@ -1,7 +1,8 @@
 {
     "dir": {
         "input": "input",
-        "output": "output"
+        "output": "output",
+        "output_html": "output/html"
     },
     "invoice_downloader": {
         "download_folder": "downloads",

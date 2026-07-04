@@ -1,23 +1,19 @@
 from bs4 import BeautifulSoup
+from app.utils.string import StringUtils
 import logging
 import re
-from config import (
-    STORE_NAME__CLASS, 
-    CNPJ_STORE_STATE_CODE__CLASS
-    )
 import os
 import csv
 
-class NFCeParser:
-    def __init__(self, file_path, NFCE_DATA_DIR, PARSER_OUTPUT_FOLDER):
+class InvoiceParser:
+    def __init__(self, file_path):
         """
         Initialize the NFCeParser with a path to an HTML file.
         Args:
             file_path (str): Path to the HTML file to parse.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.NFCE_DATA_DIR = NFCE_DATA_DIR
-        self.PARSER_OUTPUT_FOLDER = PARSER_OUTPUT_FOLDER
+        self.PARSER_OUTPUT_FOLDER = "output/parser"
         self.file_path = file_path
 
         # Read file content
@@ -108,13 +104,13 @@ class NFCeParser:
         """
         Parses the store name from the HTML and returns it.
         """
-        return soup.find('td', {'class': STORE_NAME__CLASS}).contents[0].strip()
+        return soup.find('td', {'class': self.config.invoice_parser.store_name__class}).contents[0].strip()
 
     def _parse_store_codes(self, soup):
         """
         Parses the CNPJ and store state code from the HTML and returns them as a list [CNPJ, store_state_code].
         """
-        raw_codes = soup.find('td', {'class': CNPJ_STORE_STATE_CODE__CLASS}).contents[0].strip()
+        raw_codes = soup.find('td', {'class': self.config.invoice_parser.cnpj_store_state_code__class}).contents[0].strip()
         codes = [s.strip() for s in raw_codes.split('\n')]
         cnpj = codes[1]
         store_state_code = codes[2].replace("Inscrição Estadual: ", "").strip()
@@ -124,7 +120,7 @@ class NFCeParser:
         """
         Parses the store address from the HTML and returns it.
         """
-        address = soup.find_all('td', {'class': CNPJ_STORE_STATE_CODE__CLASS})[1].contents[0].strip()
+        address = soup.find_all('td', {'class': self.config.invoice_parser.cnpj_store_state_code__class})[1].contents[0].strip()
         return self._replace_multiple_spaces(address)
     
 
@@ -132,7 +128,7 @@ class NFCeParser:
         """
         Parses the purchase date from the HTML and returns it.
         """
-        soup_list = soup.find_all('td', {'class': STORE_NAME__CLASS})
+        soup_list = soup.find_all('td', {'class': self.config.invoice_parser.store_name__class})
         date_raw = [s for s in soup_list if "Data de Emissão" in s.contents[0].strip()][0]
         date_raw = date_raw.contents[0].strip()
         return self._extract_datetime(date_raw)
@@ -153,7 +149,7 @@ class NFCeParser:
         """
         Parses the access key from the HTML and returns it.
         """
-        soup_list = soup.find_all('td', {'class': STORE_NAME__CLASS})
+        soup_list = soup.find_all('td', {'class': self.config.invoice_parser.store_name__class})
         raw_access_key = [s for s in soup_list if self._extract_access_key(s.contents[0].strip())]
         return raw_access_key[0].contents[0].replace(" ","") if raw_access_key else None
 
@@ -198,13 +194,12 @@ class NFCeParser:
         """
         Parse the file provided to this parser instance and write the JSON output.
         """
-        data_tools = DataTools()
 
         # Parse the current file (self.file_path)
         self.parse()
         [purchase_data, purchase_items_data] = self.return_data()
 
-        unique_key = data_tools.create_unique_key(
+        unique_key = StringUtils.create_unique_key(
             purchase_data[5],
             purchase_data[4].split(" ")[0] if purchase_data[4].split(" ")[0] else "",
             purchase_data[0]

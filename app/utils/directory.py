@@ -9,9 +9,11 @@ class DirectoryManager:
         """
         return list(input_folder.glob("*.csv"))
     
-    def list_files(self, folder_path):
+    def list_files(self, folder_path, extension=None):
         """
         List all files in the given folder.
         """
         folder = Path(folder_path)
+        if extension:
+            return [file for file in folder.iterdir() if file.is_file() and file.suffix == extension]
         return [file for file in folder.iterdir() if file.is_file()]

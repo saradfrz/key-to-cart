@@ -65,22 +65,22 @@ class InvoiceDownloader:
         # Dismiss any alert before interacting with the page
         alert_text = self._dismiss_alert_if_present()
         if alert_text:
-            self.logger.scraping_info(f"Skipping key {unique_key} due to alert: {alert_text}")
+            self.logger.info(f"Skipping key {unique_key} due to alert: {alert_text}")
             return False  # signal to caller that this key failed
 
         nfce_html = driver.page_source
-        file_path = os.path.join("html", f"{unique_key}.html")
+        file_path = os.path.join(self.config.dir.output_html, f"{unique_key}.html")
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(nfce_html)
 
-        self.logger.scraping_info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
+        self.logger.info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
         return True
     
     def _dismiss_alert_if_present(self):
         try:
             alert = self.driver.switch_to.alert
             alert_text = alert.text
-            self.logger.scraping_info(f"Dismissed alert: {alert_text}")
+            self.logger.info(f"Dismissed alert: {alert_text}")
             alert.accept()  # clicks OK
             return alert_text
         except Exception as e:
@@ -91,11 +91,11 @@ class InvoiceDownloader:
             self.driver.quit()
             self.logger.info("Browser closed.")
 
-    def run(self, nfce):
+    def run(self, nfce, nfce_id):
         self.access_nfce_html(nfce)
         self.find_next_button()
         time.sleep(3)
-        self.download_html(self.create_unique_key(nfce, id))
+        self.download_html(self.create_unique_key(nfce, nfce_id))
         time.sleep(2)   
 
 
