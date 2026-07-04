@@ -1,8 +1,10 @@
 {
+    "year": 2021,
     "dir": {
         "input": "input",
         "output": "output",
-        "output_html": "output/html"
+        "output_html": "output/html",
+        "output_parser": "output/parser"
     },
     "invoice_downloader": {
         "download_folder": "downloads",

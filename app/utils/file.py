@@ -55,6 +55,6 @@ class FileManager:
         Save data to a CSV file.
         """
         with open(file_path, 'w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
+            writer = csv.writer(file, delimiter=';', quoting=csv.QUOTE_ALL)
             writer.writerow(headers)
             writer.writerows(data)

@@ -1,6 +1,7 @@
 from app.utils.directory import DirectoryManager
 from app.utils.file import FileManager
 import logging
+import os
 
 class InvoiceSource:
 
@@ -15,10 +16,11 @@ class InvoiceSource:
     
     def get_invoice_history(self, file_list):
         history = []
-        for file in file_list:
-            contents = self.file_manager.read_csv(file)
-            history.extend(contents[1])
-            columns = contents[0]  # Extend with rows, excluding header
+        file = [x for x in file_list if str(self.config.year) in x][0]  # Get the first file that contains the year
+        file_path = os.path.join(self.config.dir.input, file)
+        contents = self.file_manager.read_csv(file_path)
+        history.extend(contents[1])
+        columns = contents[0]
         return history, columns
     
     def list_invoice_nfce_codes(self, history):

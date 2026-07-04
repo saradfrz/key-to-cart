@@ -6,110 +6,98 @@ import os
 import csv
 
 class InvoiceParser:
-    def __init__(self, file_path):
-        """
-        Initialize the NFCeParser with a path to an HTML file.
-        Args:
-            file_path (str): Path to the HTML file to parse.
-        """
+    def __init__(self, filename, config):
+        self.config = config
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.PARSER_OUTPUT_FOLDER = "output/parser"
-        self.file_path = file_path
+        self.filename = filename
+        self.filepath = os.path.join(self.config.dir.output_html, filename)
+        self.id = filename.split("_")[0]
+        self.nfce_id = filename.split("_")[1]
+        self.str = StringUtils()
 
         # Read file content
         content = None
         try:
-            with open(file_path, mode='r', encoding='utf-8') as f:
+            with open(self.filepath, mode='r', encoding='utf-8') as f:
                 content = f.read()
         except Exception:
             content = None
 
-        soup = BeautifulSoup(content, 'html.parser') if content else None
-        self.soup_list = soup.find_all('table') if soup else None
-        self.purchase_data = []
-        self.purchase_items_data = []
-        self.logger = logging.getLogger(self.__class__.__name__)
-
+        self.soup = BeautifulSoup(content, 'html.parser') if content else None
+        self.soup_list = self.soup.find_all('table') if self.soup else None
+        self.purchase_data = {}
+        self.purchase_items = []
         
     def store_data(self, key, value):
-        """
-        Store data in the parser's data dictionary.
-        Args:
-        key (str): The key under which to store the value.
-        value (any): The value to store.
-        """
         self.data[key] = value
 
     def return_data(self):
-        """
-        Return the data stored in the parser.
-        Returns:
-        dict: The data dictionary.
-        """
         return [self.purchase_data, self.purchase_items_data]
     
-    def parse(self):
-        """
-        Parse the file content and extract relevant data.
-        This method should be implemented in subclasses.
-        """
+    def parse_purchase_data(self):
         for soup in self.soup_list:
             try:
                 store = self._parse_store(soup)
+                if store and not self.purchase_data.get("store"):
+                    self.purchase_data["store"] = store
+
             except Exception as e:
-                self.logger.error(f"Error parsing store: {e}")
                 store = None
                 continue
 
             try:
                 [cnpj, store_state_code] = self._parse_store_codes(soup)
+                if cnpj and not self.purchase_data.get("cnpj"):
+                    self.purchase_data["cnpj"] = cnpj
+                    self.purchase_data["store_state_code"] = store_state_code
             except Exception as e:
-                self.logger.error(f"Error parsing cnpj/store_state_code: {e}")
                 cnpj = None
                 store_state_code = None
                 pass
             try:
                 address = self._parse_store_address(soup)
+                if address and not self.purchase_data.get("address"):
+                    self.purchase_data["address"] = address
             except Exception as e:
-                self.logger.error(f"Error parsing store_address: {e}")
                 address = None
                 pass
             try:
                 purchase_date = self._parse_purchase_date(soup)
+                if purchase_date and not self.purchase_data.get("purchase_date"):
+                    self.purchase_data["purchase_date"] = purchase_date
             except Exception as e:
-                self.logger.error(f"Error parsing purchase_date: {e}")
                 purchase_date = None
                 pass
             try:
                 access_key = self._parse_access_key(soup)
+                if access_key and not self.purchase_data.get("access_key"):
+                    self.purchase_data["access_key"] = access_key
             except Exception as e:
-                self.logger.error(f"Error parsing access_key: {e}")
                 access_key = None
                 pass
 
-        self.purchase_data = [store, cnpj, store_state_code, address, purchase_date, access_key]
 
+    def parse_purchase_items(self):
         try:
-            purchase = self._parse_purchase()
+            table = [x for x in self.soup_list if "NFCDetalhe_Item" in str(x)][0]
+            items_raw = table.find_all('tr', id=re.compile(r'^Item \+ \d+$'))
+            items = []
+            for item_raw in items_raw:
+                # ["Código", "Descrição", "Qtde", "Un", "Vl Unit", "Vl Total"]
+                values = [s.contents[0] for s in item_raw.find_all('td')]
+                items.append(values)
+            
+            self.purchase_items = items # list of lists
+            
         except Exception as e:
             self.logger.error(f"Error parsing purchase: {e}")
             purchase = None
             pass
-        for item in purchase if purchase else []:
-            item.extend([access_key])
-            self.purchase_items_data.append(item)
-
 
     def _parse_store(self, soup: BeautifulSoup):
-        """
-        Parses the store name from the HTML and returns it.
-        """
         return soup.find('td', {'class': self.config.invoice_parser.store_name__class}).contents[0].strip()
 
     def _parse_store_codes(self, soup):
-        """
-        Parses the CNPJ and store state code from the HTML and returns them as a list [CNPJ, store_state_code].
-        """
         raw_codes = soup.find('td', {'class': self.config.invoice_parser.cnpj_store_state_code__class}).contents[0].strip()
         codes = [s.strip() for s in raw_codes.split('\n')]
         cnpj = codes[1]
@@ -117,106 +105,41 @@ class InvoiceParser:
         return [cnpj, store_state_code]
 
     def _parse_store_address(self, soup: BeautifulSoup):
-        """
-        Parses the store address from the HTML and returns it.
-        """
         address = soup.find_all('td', {'class': self.config.invoice_parser.cnpj_store_state_code__class})[1].contents[0].strip()
         return self._replace_multiple_spaces(address)
-    
 
     def _parse_purchase_date(self, soup: BeautifulSoup):
-        """
-        Parses the purchase date from the HTML and returns it.
-        """
         soup_list = soup.find_all('td', {'class': self.config.invoice_parser.store_name__class})
         date_raw = [s for s in soup_list if "Data de Emissão" in s.contents[0].strip()][0]
         date_raw = date_raw.contents[0].strip()
         return self._extract_datetime(date_raw)
 
     def _extract_datetime(self, date_raw):
-        """
-        Extracts and returns a datetime string in the pattern dd/dd/dddd dd:dd:dd from the input string.
-        Args:
-            date_raw (str): The raw string containing the date and time.
-        Returns:
-            str or None: The matched datetime string, or None if not found.
-        """
         pattern = r"\b\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}\b"
         match = re.search(pattern, date_raw)
         return match.group(0) if match else None
 
     def _parse_access_key(self, soup):
-        """
-        Parses the access key from the HTML and returns it.
-        """
         soup_list = soup.find_all('td', {'class': self.config.invoice_parser.store_name__class})
         raw_access_key = [s for s in soup_list if self._extract_access_key(s.contents[0].strip())]
         return raw_access_key[0].contents[0].replace(" ","") if raw_access_key else None
 
-
     def _extract_access_key(self, text):
-        """
-        Extracts and returns a string matching the NFE access key pattern:
-        11 groups of 4 digits separated by spaces (e.g., 4321 0189 8972 ...).
-        Args:
-            text (str): The input string to search.
-        Returns:
-            str or None: The matched access key string, or None if not found.
-        """
         pattern = r"(\d{4} ){10}\d{4}"
         match = re.search(pattern, text)
         return match.group(0) if match else None
     
-    def _replace_multiple_spaces(self, text):
-        """
-        Replaces multiple spaces in a string with a single space.
-        Args:
-            text (str): The input string.
-        Returns:
-            str: The modified string with multiple spaces replaced by a single space.
-        """
-        return re.sub(r'\s+', ' ', text).strip()
-
-    def _parse_purchase(self, soup: BeautifulSoup) -> list[list[str]]:
-        """
-        Parses the purchase items from the HTML and returns them as a list of items bought in the purchase.
-        """
-        table = soup.find_all('table')[1]
-        items_raw = table.find_all('tr', id=re.compile(r'^Item \+ \d+$'))
-        items = []
-        for item_raw in items_raw:
-            # ["Código", "Descrição", "Qtde", "Un", "Vl Unit", "Vl Total"]
-            values = [s.contents[0] for s in item_raw.find_all('td')]
-            items.append(values)
-        return items
-    
     def run(self):
-        """
-        Parse the file provided to this parser instance and write the JSON output.
-        """
+        self.parse_purchase_data() # -> self.purchase_data
+        self.parse_purchase_items() # -> self.purchase_items
 
-        # Parse the current file (self.file_path)
-        self.parse()
-        [purchase_data, purchase_items_data] = self.return_data()
+        purchase = []
 
-        unique_key = StringUtils.create_unique_key(
-            purchase_data[5],
-            purchase_data[4].split(" ")[0] if purchase_data[4].split(" ")[0] else "",
-            purchase_data[0]
-        )
+        for item in self.purchase_items:
+            item_purchase = [self.id]
+            item_purchase.extend(self.purchase_data.values())  # Append purchase_data values to each item
+            item_purchase.extend(item)  # Append id_purchase and ncfe_id to each item
+            purchase.append(item_purchase)
 
-        purchase_data_items_filename = os.path.join(self.PARSER_OUTPUT_FOLDER, f"{unique_key}_purchase_items_data.csv")      
-        purchase_data_items_columns = ["Código", "Descrição", "Qtde", "Un", "Vl Unit", "Vl Total"]
-
-        with open(purchase_data_items_filename, 'w', newline='', encoding='utf-8') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(purchase_data_items_columns)
-            csv_writer.writerows(purchase_items_data)           
-
-        return purchase_data
-        
-
-
-
-
-
+        return purchase
+    
