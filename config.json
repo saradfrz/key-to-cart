@@ -3,6 +3,7 @@
     "dir": {
         "input": "input",
         "output": "output",
+        "logs": "logs",
         "output_html": "output/html",
         "output_parser": "output/parser"
     },

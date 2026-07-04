@@ -8,7 +8,6 @@ from app.utils.file import FileManager
 from app.source.invoice_source import InvoiceSource
 from app.downloader.invoice_downloader import InvoiceDownloader 
 from app.parser.invoice_parser import InvoiceParser
-# from app.exporter.invoice_exporter import InvoiceExporter
 
 class InvoicePipeline:
 
@@ -19,25 +18,18 @@ class InvoicePipeline:
         self.file = FileManager()
         self.source = InvoiceSource(config)
         self.downloader = InvoiceDownloader(config)
-        # self.exporter = InvoiceExporter(config)
 
     def run(self):
 
-        # Setup the environment and directories
-        output_html_path = self.config.dir.output_html
-        if os.path.exists(output_html_path):
-            shutil.rmtree(output_html_path)
-        os.makedirs(output_html_path, exist_ok=True)
-
         # Get the list of invoice NFCe codes from the source
         invoice_nfce_codes = self.source.run()
-        invoice_nfce_codes = list(set(invoice_nfce_codes[0:2]))  # Remove duplicates
+        invoice_nfce_codes = list(set(invoice_nfce_codes))  # Remove duplicates
 
         # Scrap invoices from the source and download them
         for x, nfce_code in enumerate(invoice_nfce_codes):
             nfce_id = x + 1
             try:                
-                self.logger.info(f"Processing nfce {nfce_id}/{len(invoice_nfce_codes)} with key: {nfce_code}")
+                print(f"Processing nfce {nfce_id}/{len(invoice_nfce_codes)} with key: {nfce_code}")
                 self.downloader.run(nfce_code, nfce_id)       
             except Exception as e:
                 self.logger.error(f"An error occurred while scrapping {nfce_code}: {e}")
@@ -49,7 +41,7 @@ class InvoicePipeline:
         for x, html_file in enumerate(html_files):
             nfce_id = x + 1
             try:
-                self.logger.info(f"Parsing nfce {nfce_id}/{len(html_files)}: {html_file}")
+                print(f"Parsing nfce {nfce_id}/{len(html_files)}: {html_file}")
                 parser = InvoiceParser(html_file, self.config)
                 purchase = parser.run()
                 if purchase:

@@ -13,7 +13,8 @@ def setup_logger() -> logging.Logger:
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
 
-    log_file = logs_dir / "application.log"
+    info_log_file = logs_dir / "info.log"
+    error_log_file = logs_dir / "error.log"
 
     logger = logging.getLogger("invoice_pipeline")
 
@@ -28,10 +29,15 @@ def setup_logger() -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
+    info_file_handler = logging.FileHandler(info_log_file, encoding="utf-8")
+    info_file_handler.setLevel(logging.INFO)
+    info_file_handler.setFormatter(formatter)
 
-    logger.addHandler(file_handler)
+    error_file_handler = logging.FileHandler(error_log_file, encoding="utf-8")
+    error_file_handler.setLevel(logging.ERROR)
+    error_file_handler.setFormatter(formatter)
+
+    logger.addHandler(info_file_handler)
+    logger.addHandler(error_file_handler)
 
     return logger

@@ -3,15 +3,24 @@ from app.utils.logger import setup_logger
 from app.pipeline.invoice_pipeline import InvoicePipeline
 import undetected_chromedriver as uc
 
+import os
+import shutil
+
 
 
 if __name__ == "__main__":
+    # Setup the environment and directories
+    config = load_config("config.json")
+    dirs = [config.dir.output_html, config.dir.logs]
+    for directory in dirs:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+        os.makedirs(directory, exist_ok=True)
+
     logger = setup_logger()
     logger.info("Application started.")
 
     try:
-        config = load_config("config.json")
-
         pipeline = InvoicePipeline(config)
         pipeline.run()
 
