@@ -2,6 +2,10 @@ import os
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
 import logging
 
 
@@ -28,31 +32,42 @@ class InvoiceDownloader:
         self.driver.set_page_load_timeout(180)
         self.logger.info(f"Undetected Chrome started with download folder: {self.download_folder}")
 
-    def access_nfce_html(self, key):
-        driver = self.driver
-        key = key.replace(" ", "")  # URL encode spaces
-        driver.get(f"{self.nfce_url_template}{key}")  # Must load the domain first
-        time.sleep(5)
-
-        if "Acesso Negado" in driver.page_source:
-            self.logger.error(f"Acesso Negado")
-
     def find_next_button(self):
         driver = self.driver
         try:
-            # Switch to the iframe containing the button
-            iframe = driver.find_element('tag name', 'iframe')
-            driver.switch_to.frame(iframe)
-            # Find and click the button with value 'Avançar'
-            next_button = driver.find_element('xpath', "//input[@type='submit' and @value='Avançar']")
-            next_button.click()
+            driver.switch_to.default_content()
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) == 0:
+                return None
 
-            # here i see the data, i can inspect the data in the driver html but i cant extract it
-            time.sleep(5)  # Wait for the page to load after clicking
+            frame_element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, 'iframe'))
+            )
+            driver.switch_to.frame(frame_element)
+
+            time.sleep(5) # Wait for the iframe content to load
+            next_button = WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@type='submit' and @value='Avançar']"))
+            )
+            next_button.click()
+            
+            time.sleep(3)  # Wait for the page to load after clicking
             self.driver = driver
         except Exception as e:
             self.logger.error(f"Failed to find or click 'Avançar' button: {e}")
             raise Exception(f"Failed to find or click 'Avançar' button: {e}")
+
+
+    def access_nfce_html(self, key):
+        driver = self.driver
+        driver.get(f"{self.nfce_url_template}{key}")  # Must load the domain first
+        time.sleep(7)
+
+        if "Acesso Negado" in driver.page_source:
+            self.logger.error(f"Acesso Negado")
+
+        self.find_next_button()
+
 
     def create_unique_key(self, nfce, id):
         access_key = nfce.replace(" ", "")
@@ -60,7 +75,7 @@ class InvoiceDownloader:
 
     def download_html(self, unique_key):
         driver = self.driver
-        time.sleep(5)  # Ensure the page is fully loaded
+        time.sleep(3)  # Ensure the page is fully loaded
 
         # Dismiss any alert before interacting with the page
         alert_text = self._dismiss_alert_if_present()
@@ -68,13 +83,7 @@ class InvoiceDownloader:
             self.logger.info(f"Skipping key {unique_key} due to alert: {alert_text}")
             return False  # signal to caller that this key failed
 
-        nfce_html = driver.page_source
-        file_path = os.path.join(self.config.dir.output_html, f"{unique_key}.html")
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(nfce_html)
-
-        self.logger.info(f"Downloaded nfce HTML for key {unique_key} to {file_path}")
-        return True
+        return driver.page_source
     
     def _dismiss_alert_if_present(self):
         try:
@@ -92,10 +101,32 @@ class InvoiceDownloader:
             self.logger.info("Browser closed.")
 
     def run(self, nfce, nfce_id):
-        self.access_nfce_html(nfce)
-        self.find_next_button()
-        time.sleep(3)
-        self.download_html(self.create_unique_key(nfce, nfce_id))
+        success = False
+        for x in range(5):  # Retry up to 5 times
+            try:
+                if x < 2:
+                    time.sleep(5)
+                    self.access_nfce_html(nfce)
+                if x >= 2:
+                    self.find_next_button()
+                    time.sleep(5)
+                nfce_html = self.download_html(f"{nfce_id}_{nfce}")
+                if "case '12': return {'uf':'AC', 'ext':'do Acre' };" in  nfce_html:
+                    success = True
+                    break
+
+                if x == 4 and not success:
+                    raise Exception(f"Failed to download valid HTML for {nfce} after 5 attempts.")
+            except Exception as e:
+                self.logger.error(f"Error downloading HTML for {nfce} on attempt {x+1}: {e}")
+
+            time.sleep(5)
+        
+
+        file_path = os.path.join(self.config.dir.output_html, f"{nfce_id}_{nfce}.html")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(nfce_html)
+        self.logger.info(f"Downloaded nfce HTML for key {nfce_id}_{nfce} to {file_path}")            
         time.sleep(2)   
 
 

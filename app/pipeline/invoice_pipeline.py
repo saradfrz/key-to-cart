@@ -28,6 +28,8 @@ class InvoicePipeline:
         # Scrap invoices from the source and download them
         for x, nfce_code in enumerate(invoice_nfce_codes):
             nfce_id = x + 1
+            nfce_id = str(nfce_id).zfill(3)
+            nfce_code = nfce_code.replace(" ", "")
             try:                
                 print(f"Processing nfce {nfce_id}/{len(invoice_nfce_codes)} with key: {nfce_code}")
                 self.downloader.run(nfce_code, nfce_id)       
@@ -40,6 +42,7 @@ class InvoicePipeline:
         html_files = sorted(self.dir.list_files(self.config.dir.output_html, extension=".html"))
         for x, html_file in enumerate(html_files):
             nfce_id = x + 1
+            nfce_id = str(nfce_id).zfill(3)
             try:
                 print(f"Parsing nfce {nfce_id}/{len(html_files)}: {html_file}")
                 parser = InvoiceParser(html_file, self.config)
