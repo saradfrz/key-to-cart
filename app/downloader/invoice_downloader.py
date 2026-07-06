@@ -73,7 +73,7 @@ class InvoiceDownloader:
         access_key = nfce.replace(" ", "")
         return f"{id}_{access_key}"
 
-    def download_html(self, unique_key):
+    def get_html(self, unique_key):
         driver = self.driver
         time.sleep(3)  # Ensure the page is fully loaded
 
@@ -81,7 +81,7 @@ class InvoiceDownloader:
         alert_text = self._dismiss_alert_if_present()
         if alert_text:
             self.logger.info(f"Skipping key {unique_key} due to alert: {alert_text}")
-            return False  # signal to caller that this key failed
+            return None  # signal to caller that this key failed
 
         return driver.page_source
     
@@ -101,32 +101,46 @@ class InvoiceDownloader:
             self.logger.info("Browser closed.")
 
     def run(self, nfce, nfce_id):
-        success = False
+        
         for x in range(5):  # Retry up to 5 times
+            success = False
             try:
                 if x < 2:
                     time.sleep(5)
                     self.access_nfce_html(nfce)
                 if x >= 2:
+                    time.sleep(x*3)
                     self.find_next_button()
-                    time.sleep(5)
-                nfce_html = self.download_html(f"{nfce_id}_{nfce}")
+                    time.sleep(x*3)
+                nfce_html = self.get_html(f"{nfce_id}_{nfce}")
+
+                if not nfce_html:
+                    print(f"Skipping key {nfce_id}_{nfce} due to alert or failed page load.")
+                    return False
+
                 if "case '12': return {'uf':'AC', 'ext':'do Acre' };" in  nfce_html:
+                    
                     success = True
-                    break
+                    file_path = os.path.join(self.config.dir.output_html, f"{nfce_id}_{nfce}.html")
+                    
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(nfce_html)
+                    print(f"Downloaded nfce HTML for key {nfce_id}_{nfce} to {file_path}")            
+                    time.sleep(2)   
+
+                    return True  # Successfully downloaded and saved the HTML
 
                 if x == 4 and not success:
-                    raise Exception(f"Failed to download valid HTML for {nfce} after 5 attempts.")
+                    self.logger.error(f"Failed to download valid HTML for {nfce} after 5 attempts.")
+                    return False  # Failed after 5 attempts
             except Exception as e:
                 self.logger.error(f"Error downloading HTML for {nfce} on attempt {x+1}: {e}")
-
+                # self.find_next_button()
+                # nfce_html = self.download_html(f"{nfce_id}_{nfce}")
+                # if not nfce_html:
+                #     self.logger.info(f"Skipping key {nfce_id}_{nfce} due to alert or failed page load.")
+                    
             time.sleep(5)
         
-
-        file_path = os.path.join(self.config.dir.output_html, f"{nfce_id}_{nfce}.html")
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(nfce_html)
-        self.logger.info(f"Downloaded nfce HTML for key {nfce_id}_{nfce} to {file_path}")            
-        time.sleep(2)   
-
+            
 
