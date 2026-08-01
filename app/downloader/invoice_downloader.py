@@ -18,6 +18,7 @@ class InvoiceDownloader:
         self.nfce_url_template = self.config.invoice_downloader.nfce_url_template
         self.wait_timeout = self.config.invoice_downloader.wait_timeout
         self.driver = None
+        self.failed_nfce = None
 
         self.setup_browser(headless=False, user_data_dir=self.config.invoice_downloader.user_data_dir)
 
@@ -31,6 +32,7 @@ class InvoiceDownloader:
         self.driver = uc.Chrome(version_main=149)
         self.driver.set_page_load_timeout(180)
         self.logger.info(f"Undetected Chrome started with download folder: {self.download_folder}")
+        
 
     def find_next_button(self):
         driver = self.driver
@@ -116,30 +118,23 @@ class InvoiceDownloader:
 
                 if not nfce_html:
                     print(f"Skipping key {nfce_id}_{nfce} due to alert or failed page load.")
+                    self.failed_nfce = [nfce_id, nfce]
                     return False
 
                 if "case '12': return {'uf':'AC', 'ext':'do Acre' };" in  nfce_html:
-                    
                     success = True
                     file_path = os.path.join(self.config.dir.output_html, f"{nfce_id}_{nfce}.html")
-                    
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(nfce_html)
                     print(f"Downloaded nfce HTML for key {nfce_id}_{nfce} to {file_path}")            
                     time.sleep(2)   
-
                     return True  # Successfully downloaded and saved the HTML
 
                 if x == 4 and not success:
                     self.logger.error(f"Failed to download valid HTML for {nfce} after 5 attempts.")
                     return False  # Failed after 5 attempts
             except Exception as e:
-                self.logger.error(f"Error downloading HTML for {nfce} on attempt {x+1}: {e}")
-                # self.find_next_button()
-                # nfce_html = self.download_html(f"{nfce_id}_{nfce}")
-                # if not nfce_html:
-                #     self.logger.info(f"Skipping key {nfce_id}_{nfce} due to alert or failed page load.")
-                    
+                self.logger.error(f"Error downloading HTML for {nfce} on attempt {x+1}: {e}")                    
             time.sleep(5)
         
             

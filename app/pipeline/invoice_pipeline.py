@@ -39,6 +39,7 @@ class InvoicePipeline:
 
         # Parse the downloaded invoices
         purchases = []
+        failed_nfces = []
         html_files = sorted(self.dir.list_files(self.config.dir.output_html, extension=".html"))
         for x, html_file in enumerate(html_files):
             nfce_id = x + 1
@@ -47,6 +48,8 @@ class InvoicePipeline:
                 print(f"Parsing nfce {nfce_id}/{len(html_files)}: {html_file}")
                 parser = InvoiceParser(html_file, self.config)
                 purchase = parser.run()
+                if purchase.failed_nfce:
+                    failed_nfces.append(purchase.failed_nfce)
                 if purchase:
                     purchases.extend(purchase)
             except Exception as e:
@@ -70,4 +73,8 @@ class InvoicePipeline:
             ]
         
         self.file.save_csv(f"{self.config.dir.output}/{self.config.year}_purchase_data_items.csv", purchase_columns, purchases)
+
+        failed_nfces_columns = ["nfce_id", "nfce"]
+        self.file.save_csv(f"{self.config.dir.output}/{self.config.year}_failed_nfces.csv", failed_nfces_columns, failed_nfces)
+
 
