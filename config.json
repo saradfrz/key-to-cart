@@ -1,5 +1,6 @@
 {
     "year": 2026,
+    "chrome_version": 154,
     "dir": {
         "input": "input",
         "output": "output",

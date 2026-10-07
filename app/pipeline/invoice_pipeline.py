@@ -40,21 +40,45 @@ class InvoicePipeline:
         # Parse the downloaded invoices
         purchases = []
         failed_nfces = []
-        html_files = sorted(self.dir.list_files(self.config.dir.output_html, extension=".html"))
-        for x, html_file in enumerate(html_files):
-            nfce_id = x + 1
-            nfce_id = str(nfce_id).zfill(3)
+
+        html_files = sorted(
+            self.dir.list_files(
+                self.config.dir.output_html,
+                extension=".html",
+            )
+        )
+
+        for position, html_file in enumerate(html_files, start=1):
+            file_stem = os.path.splitext(html_file)[0]
+            invoice_id, access_key = file_stem.split("_", maxsplit=1)
+
+            self.logger.info(
+                "Parsing invoice %s/%s: %s",
+                position,
+                len(html_files),
+                html_file,
+            )
+
             try:
-                print(f"Parsing nfce {nfce_id}/{len(html_files)}: {html_file}")
                 parser = InvoiceParser(html_file, self.config)
-                purchase = parser.run()
-                if purchase.failed_nfce:
-                    failed_nfces.append(purchase.failed_nfce)
-                if purchase:
-                    purchases.extend(purchase)
-            except Exception as e:
-                self.logger.error(f"An error occurred while parsing {html_file}: {e}")
-                continue
+                purchase_rows = parser.run()
+
+                if not purchase_rows:
+                    failed_nfces.append([invoice_id, access_key])
+                    self.logger.warning(
+                        "No item rows extracted from %s",
+                        html_file,
+                    )
+                    continue
+
+                purchases.extend(purchase_rows)
+
+            except Exception:
+                failed_nfces.append([invoice_id, access_key])
+                self.logger.exception(
+                    "Failed to parse invoice %s",
+                    html_file,
+                )
         
         # Export the parsed data to CSV
         purchase_columns = [

@@ -27,9 +27,9 @@ class InvoiceDownloader:
         options.add_argument('--disable-blink-features=AutomationControlled')
         if headless:
             options.add_argument("--headless=new")  # safer headless option for newer Chrome
-        if user_data_dir:
-            options.add_argument(f"--user-data-dir={str(user_data_dir)}")
-        self.driver = uc.Chrome(version_main=149)
+        #if user_data_dir:
+        #    options.add_argument(f"--user-data-dir={str(user_data_dir)}")
+        self.driver = uc.Chrome(version_main=self.config.chrome_version, options=options)
         self.driver.set_page_load_timeout(180)
         self.logger.info(f"Undetected Chrome started with download folder: {self.download_folder}")
         
